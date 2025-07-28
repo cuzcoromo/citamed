@@ -1,4 +1,5 @@
-import 'package:citamed/providers/registro_medico_providers.dart';
+import 'package:citamed/providers/controllers/form_controller.dart';
+import 'package:citamed/providers/medico/register/registro_medico_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,6 +31,7 @@ class _RegisterDoctorState extends ConsumerState<RegisterDoctor> {
   void initState() {
     super.initState();
     _nameController.addListener(_validate);
+    _apellidoController.addListener(_validate);
     _phoneController.addListener(_validate);
     _emailController.addListener(_validate);
     _licenseController.addListener(_validate);
@@ -38,6 +40,7 @@ class _RegisterDoctorState extends ConsumerState<RegisterDoctor> {
   @override
   void dispose() {
     _nameController.dispose();
+    _apellidoController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _licenseController.dispose();
@@ -46,6 +49,15 @@ class _RegisterDoctorState extends ConsumerState<RegisterDoctor> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<String?>(messageProvider, (previous, next) {
+      if (next != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next)));
+        ref.read(messageProvider.notifier).state = null; // resetear mensaje
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Center(child: Text('Registro de Mèdico'))),
       body: SingleChildScrollView(
@@ -89,7 +101,7 @@ class _RegisterDoctorState extends ConsumerState<RegisterDoctor> {
                 'Nùmero de registro',
                 _licenseController,
                 validator: _validateLicencia,
-                '****-****...',
+                '1234-...',
               ),
             ],
           ),
@@ -97,44 +109,63 @@ class _RegisterDoctorState extends ConsumerState<RegisterDoctor> {
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: () async {
-            final input = {
-              'nombre': _nameController.text,
-              'apellido': _apellidoController.text,
-              'email': _emailController.text,
-              'phone_number': _phoneController.text,
-              'num_registro': _licenseController.text,
-            };
+        child: Consumer(
+          builder: (BuildContext context, WidgetRef ref, _) {
+            final isLoading = ref.watch(isLoadingProvider);
+            return ElevatedButton(
+              onPressed:
+                  isLoading
+                      ? null
+                      : () async {
+                        final input = {
+                          'nombre': _nameController.text,
+                          'apellido': _apellidoController.text,
+                          'email': _emailController.text.trim().toLowerCase(),
+                          'num_celular': _phoneController.text,
+                          'num_registro': _licenseController.text,
+                        };
+                        ref.read(isLoadingProvider.notifier).state = true;
 
-            try {
-              await ref.watch(registrarDoctorProvider(input).future);
+                        try {
+                          await ref.watch(
+                            registrarDoctorProvider(input).future,
+                          );
+                          ref.read(messageProvider.notifier).state =
+                              'Doctor registrado con éxito';
+                        } catch (e) {
+                          ref.read(messageProvider.notifier).state = '$e';
+                        } finally {
+                          ref.read(isLoadingProvider.notifier).state = false;
+                        }
+                      },
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Doctor registrado con éxito')),
-              );
-            } catch (e) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Error: $e')));
-            }
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child:
+                  isLoading
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeAlign: 2,
+                        ),
+                      )
+                      : const Text(
+                        'Siguiente',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+            );
           },
-
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: const Text(
-            'Siguiente',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              fontSize: 16,
-            ),
-          ),
         ),
       ),
     );

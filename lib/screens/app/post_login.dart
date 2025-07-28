@@ -1,17 +1,21 @@
+import 'package:citamed/providers/post_login/post_login_providers.dart';
 import 'package:citamed/theme_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class PostLogin extends StatefulWidget {
+class PostLogin extends ConsumerStatefulWidget {
   const PostLogin({super.key});
 
   @override
-  State<PostLogin> createState() => _PostLoginState();
+  ConsumerState<PostLogin> createState() => _PostLoginState();
 }
 
-class _PostLoginState extends State<PostLogin> {
+class _PostLoginState extends ConsumerState<PostLogin> {
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Health Hub'),
@@ -74,28 +78,14 @@ class _PostLoginState extends State<PostLogin> {
                     const SizedBox(height: 10),
 
                     _builAppointmentCard(
+                      ref,
                       context,
                       'Monday',
                       'Dr. Smith',
-                      'Cardiology',
                       "https://lh3.googleusercontent.com/aida-public/AB6AXuCxQ-2nTd8lbIWhN3_Ty5Y7J-UfasOSdEVIceP4cDnUnmYAWAeD0H6o47CPhyyfZb5XTuy2t0DqFS6ULUAZx_V7BmLbnCh7vQDYJaCiudPKfoumpIlNbjm889CZZ3TUHbCF8iStg6ASgxTfxgfgdkAzYUdcl-d6m5EqWKtCH474Q-fcAGTwJdKr70CdAjyp-yFseIUDcvMcLMuj2YQrKmNLvp0tUfvU4C73S_j75nlIABYK9YPYUR7YWpUMu0KggbMYwrnynyclz-Q",
+                      theme,
                     ),
-                    const SizedBox(height: 10),
-                    _builAppointmentCard(
-                      context,
-                      'Monday',
-                      'Dr. Smith',
-                      'Cardiology',
-                      "https://lh3.googleusercontent.com/aida-public/AB6AXuCxQ-2nTd8lbIWhN3_Ty5Y7J-UfasOSdEVIceP4cDnUnmYAWAeD0H6o47CPhyyfZb5XTuy2t0DqFS6ULUAZx_V7BmLbnCh7vQDYJaCiudPKfoumpIlNbjm889CZZ3TUHbCF8iStg6ASgxTfxgfgdkAzYUdcl-d6m5EqWKtCH474Q-fcAGTwJdKr70CdAjyp-yFseIUDcvMcLMuj2YQrKmNLvp0tUfvU4C73S_j75nlIABYK9YPYUR7YWpUMu0KggbMYwrnynyclz-Q",
-                    ),
-                    const SizedBox(height: 10),
-                    _builAppointmentCard(
-                      context,
-                      'Monday',
-                      'Dr. Smith',
-                      'Cardiology',
-                      "https://lh3.googleusercontent.com/aida-public/AB6AXuCxQ-2nTd8lbIWhN3_Ty5Y7J-UfasOSdEVIceP4cDnUnmYAWAeD0H6o47CPhyyfZb5XTuy2t0DqFS6ULUAZx_V7BmLbnCh7vQDYJaCiudPKfoumpIlNbjm889CZZ3TUHbCF8iStg6ASgxTfxgfgdkAzYUdcl-d6m5EqWKtCH474Q-fcAGTwJdKr70CdAjyp-yFseIUDcvMcLMuj2YQrKmNLvp0tUfvU4C73S_j75nlIABYK9YPYUR7YWpUMu0KggbMYwrnynyclz-Q",
-                    ),
+
                     const SizedBox(height: 10),
                   ],
                 ),
@@ -178,40 +168,61 @@ Widget _buildSectionTitle(String title) {
 }
 
 Widget _builAppointmentCard(
+  WidgetRef ref,
   BuildContext context,
   String day,
-  String name,
   String info,
   String imageUrl,
+  ThemeData theme,
 ) {
-  return Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(day, style: TextStyle(color: Color(0xFF60758a))),
-              Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
-              Text(info, style: TextStyle(color: Color(0xFF60758a))),
-            ],
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(imageUrl, fit: BoxFit.cover),
+  final AsyncValue<List<Doctor>> doctors = ref.watch(getListDoctorsProvider);
+  if (doctors.isLoading) {
+    return const Center(child: CircularProgressIndicator());
+  }
+  if (doctors.hasError) {
+    return const Center(child: Text('No data'));
+  }
+  final data = doctors.value!;
+
+  return Column(
+    children:
+        data.map((doctor) {
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text(day, style: TextStyle(color: Color(0xFF60758a))),
+                      Text(
+                        'Dr. ${doctor.nombre} ${doctor.apellido}',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Cardiologo',
+                        style: TextStyle(color: Color(0xFF60758a)),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(imageUrl, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-      ],
-    ),
+          );
+        }).toList(),
   );
 }
 

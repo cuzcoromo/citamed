@@ -6,7 +6,7 @@ part of 'registro_medico_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$registrarDoctorHash() => r'b8375a06ecf81dbc1f07ac12d3329dae48b812f2';
+String _$registrarDoctorHash() => r'902e7f6cb2b90b504a90cf5af81dd1ea80e55a68';
 
 /// Copied from Dart SDK
 class _SystemHash {

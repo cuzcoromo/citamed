@@ -1,6 +1,8 @@
+import 'package:citamed/providers/post_login/post_login_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MedicosScreen extends ConsumerStatefulWidget {
   const MedicosScreen({super.key});
@@ -12,6 +14,22 @@ class MedicosScreen extends ConsumerStatefulWidget {
 class _MedicosScreenState extends ConsumerState<MedicosScreen> {
   @override
   Widget build(BuildContext context) {
+    final AsyncValue<List<Doctor>> doctors = ref.watch(getListDoctorsProvider);
+    if (doctors.isLoading) {
+      return Center(
+        child: Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(color: Colors.grey.shade200, width: 100, height: 40),
+        ),
+      );
+    }
+
+    if (doctors.hasError) {
+      return Center(child: const Text('No data'));
+    }
+    final data = doctors.value!;
+
     return Scaffold(
       appBar: AppBar(
         title: Center(
@@ -47,7 +65,7 @@ class _MedicosScreenState extends ConsumerState<MedicosScreen> {
           borderRadius: BorderRadius.circular(10),
         ),
         child: ListView.builder(
-          itemCount: 10,
+          itemCount: data.length,
           itemBuilder: (context, index) {
             return Card(
               elevation: 3,
@@ -56,7 +74,7 @@ class _MedicosScreenState extends ConsumerState<MedicosScreen> {
                 leading: CircleAvatar(child: Text('Dr.')),
                 trailing: Icon(Icons.chevron_right),
                 title: Text(
-                  'Dr. Jose Maria...',
+                  'Dr. ${data[index].nombre} ${data[index].apellido}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

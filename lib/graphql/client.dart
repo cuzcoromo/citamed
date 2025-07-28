@@ -1,8 +1,7 @@
 import 'package:citamed/core/index.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
-final String graphqlEndpoint = 'http://localhost:1337';
+// final String graphqlEndpoint = 'http://localhost:1337';
 
 GraphQLClient getGraphQLClient(String path) {
   final String baseuRrl = ENV.apiUrl;
